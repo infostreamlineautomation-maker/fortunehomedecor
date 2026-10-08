@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+backend/venv/
+backend/.venv/
+backend/.env
+# CMS uploads stay on the server; Figma seed media is versioned so deploys get it
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/figma/
+
+# Node / Next (each app also has its own .gitignore)
+node_modules/
+.next/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
