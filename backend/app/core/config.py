@@ -42,6 +42,16 @@ class Settings(BaseSettings):
     SMTP_FROM: str = ""
     ENQUIRY_NOTIFY_TO: str = ""
 
+    # Cloudinary storage for UAT / production
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
+    CLOUDINARY_FOLDER: str = "fortune_decor"
+
+    @property
+    def use_cloudinary(self) -> bool:
+        return bool(self.CLOUDINARY_CLOUD_NAME and self.CLOUDINARY_API_KEY and self.CLOUDINARY_API_SECRET)
+
     @property
     def is_production(self) -> bool:
         return self.APP_ENV.lower() == "production"

@@ -8,8 +8,9 @@ T = TypeVar("T")
 def _check_media_path(value: str | None) -> str | None:
     if value in (None, ""):
         return None
-    if not value.startswith("/uploads/") or ".." in value or "\\" in value or any(c.isspace() for c in value):
-        raise ValueError("must be a media path starting with /uploads/ (pick it from the Media Library)")
+    is_valid_prefix = value.startswith("/uploads/") or value.startswith("https://") or value.startswith("http://")
+    if not is_valid_prefix or ".." in value or "\\" in value or any(c.isspace() for c in value):
+        raise ValueError("must be a media path starting with /uploads/ or https:// (pick it from the Media Library)")
     return value
 
 

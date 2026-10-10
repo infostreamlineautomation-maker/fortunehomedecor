@@ -25,7 +25,7 @@ export function HeaderActions({ links, brand, contact, socials, footer }: Header
   const [mounted, setMounted] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
 
-  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLFormElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -82,20 +82,58 @@ export function HeaderActions({ links, brand, contact, socials, footer }: Header
 
   return (
     <>
-      <div className="flex items-center gap-1 md:gap-2">
-        {/* Search button */}
-        <button
-          ref={searchButtonRef}
-          type="button"
-          onClick={() => toggle("search")}
-          aria-label="Search"
-          aria-expanded={panel === "search"}
-          className="flex size-10 items-center justify-center rounded-xl p-2 text-ink transition-colors hover:bg-brand-tint active:scale-95 touch-manipulation"
-        >
-          <svg className="size-5 md:size-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
+      <div className="flex items-center gap-1.5 md:gap-2">
+        {/* Inline In-Header Search Bar */}
+        {panel === "search" ? (
+          <form
+            ref={searchContainerRef}
+            action="/search"
+            role="search"
+            className="flex items-center gap-2 rounded-pill border border-brand bg-white px-3 py-1.5 shadow-sm animate-in fade-in zoom-in-95 duration-150 max-w-[200px] sm:max-w-[240px] md:max-w-[280px]"
+          >
+            <button
+              type="submit"
+              aria-label="Submit search"
+              className="shrink-0 text-brand hover:opacity-80 transition-opacity"
+            >
+              <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+            <input
+              ref={searchInput}
+              type="text"
+              name="q"
+              required
+              placeholder="Search products…"
+              aria-label="Search the site"
+              className="min-w-0 flex-1 bg-transparent font-alt text-xs md:text-sm text-ink placeholder:text-muted border-0 border-none outline-none focus:outline-none focus-visible:outline-none focus:ring-0 shadow-none"
+            />
+            <button
+              type="button"
+              onClick={() => setPanel(null)}
+              aria-label="Close search"
+              className="flex size-5 shrink-0 items-center justify-center rounded-full text-stone-400 hover:text-ink hover:bg-stone-100 transition-colors"
+            >
+              <svg className="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </form>
+        ) : (
+          <button
+            ref={searchButtonRef}
+            type="button"
+            onClick={() => toggle("search")}
+            aria-label="Search"
+            aria-expanded={false}
+            className="flex size-10 items-center justify-center rounded-xl p-2 text-ink transition-colors hover:bg-brand-tint active:scale-95 touch-manipulation"
+          >
+            <svg className="size-5 md:size-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        )}
 
         {/* Mobile menu button */}
         <button
@@ -110,49 +148,6 @@ export function HeaderActions({ links, brand, contact, socials, footer }: Header
           </svg>
         </button>
       </div>
-
-      {/* Search dropdown panel & backdrop */}
-      {panel === "search" && (
-        <>
-          <div
-            aria-hidden
-            onClick={() => setPanel(null)}
-            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px] transition-opacity animate-in fade-in duration-150"
-          />
-          <div
-            ref={searchContainerRef}
-            className="absolute inset-x-0 top-full z-50 border-b border-line bg-white shadow-xl animate-in slide-in-from-top duration-200"
-          >
-            <form action="/search" role="search" className="container-site flex items-center gap-2 py-3 md:gap-3 md:py-4">
-              <input
-                ref={searchInput}
-                type="search"
-                name="q"
-                required
-                placeholder="Search curtains, blinds, wallpapers…"
-                aria-label="Search the site"
-                className="min-w-0 flex-1 rounded-pill border border-ink px-4 py-2 font-alt text-sm outline-none focus:border-brand md:px-5 md:py-2.5 md:text-base"
-              />
-              <button
-                type="submit"
-                className="rounded-pill bg-brand px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-strong md:px-6 md:py-2.5 md:text-sm"
-              >
-                Search
-              </button>
-              <button
-                type="button"
-                onClick={() => setPanel(null)}
-                aria-label="Close search"
-                className="rounded-full p-2 text-stone-400 hover:text-ink hover:bg-stone-100 transition-colors"
-              >
-                <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </form>
-          </div>
-        </>
-      )}
 
       {/* Mobile Drawer Menu (Portalled to document.body) */}
       {mounted &&

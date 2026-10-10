@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
         port: apiUrl.port,
         pathname: "/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
     ],
     qualities: [75, 90],
     // The dev API runs on localhost, which Next blocks for optimization by default

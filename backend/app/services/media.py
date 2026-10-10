@@ -59,6 +59,52 @@ def _read_limited(upload: UploadFile) -> bytes:
     return data
 
 
+def _upload_to_cloudinary(raw: bytes, filename: str, is_video: bool) -> StoredFile:
+    try:
+        import cloudinary
+        import cloudinary.uploader
+    except ImportError:
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "Cloudinary package not installed. Add 'cloudinary' to your Python environment.",
+        )
+
+    cloudinary.config(
+        cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+        api_key=settings.CLOUDINARY_API_KEY,
+        api_secret=settings.CLOUDINARY_API_SECRET,
+        secure=True,
+    )
+
+    resource_type = "video" if is_video else "image"
+    try:
+        res = cloudinary.uploader.upload(
+            raw,
+            folder=settings.CLOUDINARY_FOLDER,
+            resource_type=resource_type,
+            use_filename=True,
+            unique_filename=True,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status.HTTP_502_BAD_GATEWAY,
+            f"Failed to upload media to Cloudinary: {exc}",
+        ) from exc
+
+    url = res.get("secure_url") or res.get("url") or ""
+    mime = res.get("format") or ("video/mp4" if is_video else "image/jpeg")
+    if not mime.startswith(("image/", "video/")):
+        mime = f"{resource_type}/{mime}"
+
+    return StoredFile(
+        url=url,
+        mime_type=mime,
+        size_bytes=int(res.get("bytes") or len(raw)),
+        width=int(res.get("width") or 0),
+        height=int(res.get("height") or 0),
+    )
+
+
 def store_image(upload: UploadFile, folder: str = "library") -> StoredFile:
     """Validate an uploaded image or video, optimize/strip metadata and save it."""
     raw = _read_limited(upload)
@@ -69,6 +115,9 @@ def store_image(upload: UploadFile, folder: str = "library") -> StoredFile:
     # Check if video
     is_video = content_type in ALLOWED_VIDEO_FORMATS or file_ext in VIDEO_EXTENSIONS
     if is_video:
+        if settings.use_cloudinary:
+            return _upload_to_cloudinary(raw, filename, is_video=True)
+
         ext = file_ext if file_ext in VIDEO_EXTENSIONS else ALLOWED_VIDEO_FORMATS.get(content_type, ".mp4")
         mime = content_type if content_type in ALLOWED_VIDEO_FORMATS else VIDEO_EXTENSIONS.get(file_ext, "video/mp4")
         now = datetime.now(timezone.utc)
@@ -116,6 +165,9 @@ def store_image(upload: UploadFile, folder: str = "library") -> StoredFile:
             img.save(buf, "WEBP", quality=88)
         out = buf.getvalue()
 
+    if settings.use_cloudinary:
+        return _upload_to_cloudinary(out, filename, is_video=False)
+
     now = datetime.now(timezone.utc)
     rel = Path(folder) / f"{now:%Y}" / f"{now:%m}" / f"{uuid.uuid4().hex}{ext}"
     dest = settings.upload_path / rel
@@ -132,7 +184,31 @@ def store_image(upload: UploadFile, folder: str = "library") -> StoredFile:
 
 
 def delete_file(url: str) -> None:
-    """Remove a stored file; ignores paths outside the uploads folder."""
+    """Remove a stored file from local disk or Cloudinary; ignores invalid paths."""
+    if url.startswith("https://res.cloudinary.com/") or "cloudinary.com" in url:
+        if settings.use_cloudinary:
+            try:
+                import cloudinary
+                import cloudinary.uploader
+
+                cloudinary.config(
+                    cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+                    api_key=settings.CLOUDINARY_API_KEY,
+                    api_secret=settings.CLOUDINARY_API_SECRET,
+                    secure=True,
+                )
+                parts = url.split("/upload/")
+                if len(parts) > 1:
+                    path_part = parts[1]
+                    if path_part.startswith("v") and "/" in path_part:
+                        path_part = path_part.split("/", 1)[1]
+                    public_id = path_part.rsplit(".", 1)[0]
+                    is_video = any(url.lower().endswith(ext) for ext in VIDEO_EXTENSIONS)
+                    cloudinary.uploader.destroy(public_id, resource_type="video" if is_video else "image")
+            except Exception:
+                pass
+        return
+
     if not url.startswith("/uploads/"):
         return
     root = settings.upload_path.resolve()
