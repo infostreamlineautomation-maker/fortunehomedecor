@@ -6,7 +6,7 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import type { CategoryCard, CategoryDetail, Faq, ProductDetail, Sections, Settings } from "./types";
 
-const API = (process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+const API = (process.env.NEXT_PUBLIC_API_URL ?? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
 const DEFAULT_SETTINGS: Settings = {
   brand: {

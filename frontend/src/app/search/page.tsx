@@ -6,7 +6,7 @@ import type { SearchResult } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Search", robots: { index: false } };
 
-const API = (process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+const API = (process.env.NEXT_PUBLIC_API_URL ?? process.env.API_INTERNAL_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
 const KIND_LABELS: Record<SearchResult["kind"], string> = {
   category: "Collection",
