@@ -8,12 +8,14 @@ import { PageSkeleton } from "@/components/ui/PageSkeleton";
 import { PageTitle } from "@/components/ui/PageTitle";
 import { ScrollToHash } from "@/components/ui/ScrollToHash";
 import { getCategories, getCategory } from "@/lib/api";
-import { categoryParams } from "@/lib/params";
+import { categoryParams, PLACEHOLDER } from "@/lib/params";
 
 export const generateStaticParams = categoryParams;
 
 export async function generateMetadata({ params }: PageProps<"/products/[category]/types">): Promise<Metadata> {
-  const category = await getCategory((await params).category);
+  const slug = (await params).category;
+  if (slug === PLACEHOLDER) return { title: "Product Types" };
+  const category = await getCategory(slug);
   if (!category) return {};
   return {
     title: category.types_heading || `${category.name} Types`,
@@ -23,6 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/products/[categor
 
 async function TypesView({ params }: Pick<PageProps<"/products/[category]/types">, "params">) {
   const slug = (await params).category;
+  if (slug === PLACEHOLDER) return <PageSkeleton />;
   const [category, all] = await Promise.all([getCategory(slug), getCategories()]);
   if (!category || category.products.length === 0) notFound();
 

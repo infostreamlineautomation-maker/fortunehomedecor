@@ -8,12 +8,14 @@ import { PageTitle } from "@/components/ui/PageTitle";
 import { PageSkeleton } from "@/components/ui/PageSkeleton";
 import { getCategory } from "@/lib/api";
 import { mediaUrl } from "@/lib/media";
-import { categoryParams } from "@/lib/params";
+import { categoryParams, PLACEHOLDER } from "@/lib/params";
 
 export const generateStaticParams = categoryParams;
 
 export async function generateMetadata({ params }: PageProps<"/products/[category]">): Promise<Metadata> {
-  const category = await getCategory((await params).category);
+  const slug = (await params).category;
+  if (slug === PLACEHOLDER) return { title: "Products" };
+  const category = await getCategory(slug);
   if (!category) return {};
   const image = category.og_image || category.hero_image || category.card_image;
   return {
@@ -24,7 +26,9 @@ export async function generateMetadata({ params }: PageProps<"/products/[categor
 }
 
 async function CategoryView({ params }: Pick<PageProps<"/products/[category]">, "params">) {
-  const category = await getCategory((await params).category);
+  const slug = (await params).category;
+  if (slug === PLACEHOLDER) return <PageSkeleton />;
+  const category = await getCategory(slug);
   if (!category) notFound();
 
   return (

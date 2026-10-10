@@ -12,7 +12,9 @@ export function generateStaticParams() {
 }
 
 async function Redirect({ params }: Pick<PageProps<"/products/[category]/[product]">, "params">): Promise<never> {
-  const product = await getProduct((await params).product);
+  const p = await params;
+  if (p.product === PLACEHOLDER) notFound();
+  const product = await getProduct(p.product);
   if (!product) notFound();
   permanentRedirect(`/products/${product.category.slug}/types#${product.slug}`);
 }
