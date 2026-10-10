@@ -269,7 +269,7 @@ export function HeaderActions({ links, brand, contact, socials, footer }: Header
                   )}
                 </div>
 
-                <p className="mt-3.5 text-[11px] leading-relaxed text-white/60 font-serif-alt">
+                <p className="mt-3.5 text-[11px] leading-relaxed text-white/60 font-alt">
                   {footer?.copyright || `© ${new Date().getFullYear()} ${brand?.name || "Fortune Decor"}. All rights reserved.`}
                 </p>
               </div>

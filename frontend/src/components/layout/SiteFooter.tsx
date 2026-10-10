@@ -15,8 +15,8 @@ const SOCIALS = [
 function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="text-sm font-semibold md:text-lg">{title}</h2>
-      <div className="mt-2.5 font-serif-alt text-[0.6875rem] leading-[2] text-white/90 md:mt-3 md:text-[0.9375rem] md:text-white">{children}</div>
+      <h2 className="font-display text-sm font-semibold tracking-wide md:text-title">{title}</h2>
+      <div className="mt-2.5 font-alt text-[0.6875rem] leading-[2] text-white/90 md:mt-3 md:text-[0.9375rem] md:text-white">{children}</div>
     </div>
   );
 }
@@ -37,8 +37,8 @@ export async function SiteFooter() {
             style={{ height: "auto" }}
           />
           <p className="mt-4 font-display text-[1.0625rem] font-bold md:mt-5 md:text-h4">{brand.tagline}</p>
-          <p className="mt-1.5 max-w-[420px] text-[0.6875rem] leading-relaxed text-white/85 md:mt-2 md:text-[0.9375rem] md:text-white/90">{brand.description}</p>
-          <ButtonLink href={footer.cta_href || "/contact"} variant="light" arrow className="mt-4 font-serif md:mt-6">
+          <p className="mt-1.5 max-w-[420px] font-alt text-[0.6875rem] leading-relaxed text-white/85 md:mt-2 md:text-[0.9375rem] md:text-white/90">{brand.description}</p>
+          <ButtonLink href={footer.cta_href || "/contact"} variant="light" arrow className="mt-4 font-alt font-medium md:mt-6">
             {footer.cta_label}
           </ButtonLink>
         </div>
@@ -91,7 +91,7 @@ export async function SiteFooter() {
       </div>
 
       <div className="bg-black/25">
-        <div className="container-site flex flex-col items-center gap-1.5 py-4 text-center font-serif-alt text-[0.6875rem] text-white/90 md:flex-row md:items-center md:justify-between md:py-5 md:text-left md:text-sm md:text-white">
+        <div className="container-site flex flex-col items-center gap-1.5 py-4 text-center font-alt text-[0.6875rem] text-white/90 md:flex-row md:items-center md:justify-between md:py-5 md:text-left md:text-sm md:text-white">
           <p>{footer.copyright}</p>
           <p>
             {LEGAL_LINKS.map((l, i) => (
