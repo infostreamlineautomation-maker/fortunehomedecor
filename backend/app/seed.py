@@ -43,13 +43,22 @@ def seed_admin(db: Session) -> int:
     """Ensure standard superadmin exists with a known clean password."""
     import os
 
-    target_email = os.getenv("ADMIN_EMAIL", "admin@fortunedecor.com").strip().lower()
-    target_password = os.getenv("ADMIN_PASSWORD", "AdminPassword123!")
+    target_email = (
+        os.getenv("INITIAL_SUPERADMIN_EMAIL")
+        or os.getenv("ADMIN_EMAIL")
+        or "admin@fortunehomedecor.com"
+    ).strip().lower()
+
+    target_password = (
+        os.getenv("INITIAL_SUPERADMIN_PASSWORD")
+        or os.getenv("ADMIN_PASSWORD")
+        or "Fhd@60906090"
+    )
 
     admin = db.scalar(select(AdminUser).where(AdminUser.email == target_email))
     if admin is None:
-        # Check if legacy admin@fortunedecor.test exists from local migration
-        legacy = db.scalar(select(AdminUser).where(AdminUser.email == "admin@fortunedecor.test"))
+        # Check if legacy admin user exists from local migration
+        legacy = db.scalar(select(AdminUser).where(AdminUser.role == "superadmin"))
         if legacy is not None:
             legacy.email = target_email
             legacy.password_hash = hash_password(target_password)
@@ -67,12 +76,10 @@ def seed_admin(db: Session) -> int:
         )
         return 1
 
-    if os.getenv("ADMIN_PASSWORD"):
-        admin.password_hash = hash_password(target_password)
-        admin.is_active = True
-        return 1
-
-    return 0
+    # Synchronize password with target_password
+    admin.password_hash = hash_password(target_password)
+    admin.is_active = True
+    return 1
 
 
 def _upsert(obj, values: dict, reset: bool) -> bool:

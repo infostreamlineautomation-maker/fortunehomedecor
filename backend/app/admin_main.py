@@ -51,6 +51,20 @@ for module in (dashboard, categories, products, faqs, pages, settings_router, me
     app.include_router(module.router, dependencies=protected)
 
 
+@app.on_event("startup")
+def sync_admin_credentials():
+    try:
+        from app.core.database import SessionLocal
+        from app.seed import seed_admin
+
+        with SessionLocal() as db:
+            seed_admin(db)
+            db.commit()
+    except Exception as exc:
+        import logging
+        logging.getLogger("uvicorn.error").warning(f"Could not sync admin credentials on startup: {exc}")
+
+
 @app.get("/")
 def root():
     return {"service": "admin-api", "app": settings.APP_NAME}
