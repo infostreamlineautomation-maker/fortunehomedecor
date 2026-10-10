@@ -33,12 +33,15 @@ def login(request: Request, payload: LoginRequest, response: Response, db: Sessi
     db.commit()
 
     token = create_access_token(admin.id)
+    cookie_samesite = "none" if settings.is_production else "lax"
+    cookie_secure = True if settings.is_production else False
+
     response.set_cookie(
         AUTH_COOKIE,
         token,
         httponly=True,
-        secure=settings.is_production,
-        samesite="lax",
+        secure=cookie_secure,
+        samesite=cookie_samesite,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
     return TokenResponse(access_token=token)
@@ -46,7 +49,14 @@ def login(request: Request, payload: LoginRequest, response: Response, db: Sessi
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie(AUTH_COOKIE, httponly=True, secure=settings.is_production, samesite="lax")
+    cookie_samesite = "none" if settings.is_production else "lax"
+    cookie_secure = True if settings.is_production else False
+    response.delete_cookie(
+        AUTH_COOKIE,
+        httponly=True,
+        secure=cookie_secure,
+        samesite=cookie_samesite,
+    )
     return {"ok": True}
 
 

@@ -1,5 +1,21 @@
 export const ADMIN_API_URL = (process.env.NEXT_PUBLIC_ADMIN_API_URL ?? "http://localhost:8001").replace(/\/$/, "");
 
+const TOKEN_KEY = "fd_admin_token";
+
+export function getAdminToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setAdminToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -10,16 +26,23 @@ export class ApiError extends Error {
 }
 
 /**
- * Call the admin API from the browser. Auth is the httpOnly cookie the API sets on login,
- * so every request goes out with credentials.
+ * Call the admin API from the browser. Supports both Authorization Bearer token
+ * and httpOnly credentials cookie as fallback.
  */
 export async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  // JSON bodies need the header; FormData sets its own, and GETs skip it to avoid a CORS preflight
   const jsonBody = init.body != null && !(init.body instanceof FormData);
+  const token = getAdminToken();
+
+  const headers: Record<string, string> = {
+    ...(jsonBody ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...((init.headers as Record<string, string>) || {}),
+  };
+
   const res = await fetch(`${ADMIN_API_URL}${path}`, {
     ...init,
     credentials: "include",
-    headers: jsonBody ? { "Content-Type": "application/json", ...init.headers } : init.headers,
+    headers,
   });
 
   if (!res.ok) {

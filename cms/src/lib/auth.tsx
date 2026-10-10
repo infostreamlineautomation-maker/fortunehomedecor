@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
-import { adminFetch, ApiError } from "./api";
+import { adminFetch, ApiError, setAdminToken } from "./api";
 
 export type Admin = {
   id: number;
@@ -30,19 +30,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     adminFetch<Admin>("/auth/me")
       .then(setAdmin)
       .catch((e) => {
-        if (!(e instanceof ApiError && e.status === 401)) console.error(e);
+        if (e instanceof ApiError && e.status === 401) {
+          setAdminToken(null);
+        } else {
+          console.error(e);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    await adminFetch("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+    const res = await adminFetch<{ access_token: string }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    if (res?.access_token) {
+      setAdminToken(res.access_token);
+    }
     setAdmin(await adminFetch<Admin>("/auth/me"));
   }, []);
 
   const logout = useCallback(async () => {
-    await adminFetch("/auth/logout", { method: "POST" });
-    setAdmin(null);
+    try {
+      await adminFetch("/auth/logout", { method: "POST" });
+    } catch {
+      // ignore
+    } finally {
+      setAdminToken(null);
+      setAdmin(null);
+    }
   }, []);
 
   const refresh = useCallback(async () => {
