@@ -7,15 +7,56 @@ Safe to run on every deploy.
 """
 import argparse
 import mimetypes
+from pathlib import Path
 
 from PIL import Image
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import SessionLocal
-from app.models import Category, Faq, Media, PageSection, Product, SiteSetting
+from app.core.database import SessionLocal, engine
+from app.core.security import hash_password
+from app.models import AdminUser, Base, Category, Faq, Media, PageSection, Product, SiteSetting
 from app.seed_data import CATEGORIES, CATEGORY_FAQS, FAQS, MEDIA_ALT, PAGES, SETTINGS
+
+
+def ensure_database() -> None:
+    """Ensure database schema is created and up to date before seeding."""
+    alembic_ini = Path(__file__).resolve().parents[1] / "alembic.ini"
+    migrated = False
+    if alembic_ini.is_file():
+        try:
+            from alembic import command
+            from alembic.config import Config
+
+            cfg = Config(str(alembic_ini))
+            command.upgrade(cfg, "head")
+            migrated = True
+        except Exception as exc:
+            print(f"[seed] Note: Alembic migration skipped ({exc}); creating tables directly via SQLAlchemy models.")
+
+    if not migrated:
+        Base.metadata.create_all(bind=engine)
+
+
+def seed_admin(db: Session) -> int:
+    """Create a default superadmin user if no active admin user exists."""
+    existing = db.scalar(select(AdminUser.id).limit(1))
+    if existing is not None:
+        return 0
+
+    default_email = "admin@fortunedecor.com"
+    default_password = "AdminPassword123!"
+    db.add(
+        AdminUser(
+            email=default_email,
+            full_name="Administrator",
+            role="superadmin",
+            password_hash=hash_password(default_password),
+            is_active=True,
+        )
+    )
+    return 1
 
 
 def _upsert(obj, values: dict, reset: bool) -> bool:
@@ -124,6 +165,7 @@ def seed_media(db: Session) -> int:
 
 
 def run(reset: bool = False) -> dict[str, int]:
+    ensure_database()
     with SessionLocal() as db:
         counts = {
             "settings": seed_settings(db, reset),
@@ -131,6 +173,7 @@ def run(reset: bool = False) -> dict[str, int]:
             "catalogue": seed_catalogue(db, reset),
             "faqs": seed_faqs(db),
             "media": seed_media(db),
+            "admin": seed_admin(db),
         }
         db.commit()
     return counts
