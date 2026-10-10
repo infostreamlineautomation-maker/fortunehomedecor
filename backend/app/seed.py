@@ -40,23 +40,39 @@ def ensure_database() -> None:
 
 
 def seed_admin(db: Session) -> int:
-    """Create a default superadmin user if no active admin user exists."""
-    existing = db.scalar(select(AdminUser.id).limit(1))
-    if existing is not None:
-        return 0
+    """Ensure standard superadmin exists with a known clean password."""
+    import os
 
-    default_email = "admin@fortunedecor.com"
-    default_password = "AdminPassword123!"
-    db.add(
-        AdminUser(
-            email=default_email,
-            full_name="Administrator",
-            role="superadmin",
-            password_hash=hash_password(default_password),
-            is_active=True,
+    target_email = os.getenv("ADMIN_EMAIL", "admin@fortunedecor.com").strip().lower()
+    target_password = os.getenv("ADMIN_PASSWORD", "AdminPassword123!")
+
+    admin = db.scalar(select(AdminUser).where(AdminUser.email == target_email))
+    if admin is None:
+        # Check if legacy admin@fortunedecor.test exists from local migration
+        legacy = db.scalar(select(AdminUser).where(AdminUser.email == "admin@fortunedecor.test"))
+        if legacy is not None:
+            legacy.email = target_email
+            legacy.password_hash = hash_password(target_password)
+            legacy.is_active = True
+            return 1
+
+        db.add(
+            AdminUser(
+                email=target_email,
+                full_name="Administrator",
+                role="superadmin",
+                password_hash=hash_password(target_password),
+                is_active=True,
+            )
         )
-    )
-    return 1
+        return 1
+
+    if os.getenv("ADMIN_PASSWORD"):
+        admin.password_hash = hash_password(target_password)
+        admin.is_active = True
+        return 1
+
+    return 0
 
 
 def _upsert(obj, values: dict, reset: bool) -> bool:
