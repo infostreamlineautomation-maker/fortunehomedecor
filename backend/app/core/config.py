@@ -88,9 +88,16 @@ def _split_origins(value: str) -> list[str]:
 @lru_cache
 def get_settings() -> Settings:
     s = Settings()
-    # Refuse to boot production with a weak JWT key: anyone could forge CMS sessions
+    # If production has no or weak SECRET_KEY, generate a strong random 64-char key so the app boots safely
     if s.is_production and (s.SECRET_KEY in ("", "change-me") or len(s.SECRET_KEY) < 32):
-        raise RuntimeError("SECRET_KEY must be set to a random value of at least 32 characters in production")
+        import logging
+        import secrets
+
+        s.SECRET_KEY = secrets.token_urlsafe(64)
+        logging.getLogger("uvicorn.error").warning(
+            "SECRET_KEY was missing or too short in production. Generated a secure random key. "
+            "To persist admin sessions across restarts, set SECRET_KEY in your Render environment variables."
+        )
     return s
 
 
