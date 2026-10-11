@@ -21,10 +21,13 @@ export default function LoginPage() {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    const email = String(form.get("email") || "").trim();
+    const password = String(form.get("password") || "");
     setError("");
     setSubmitting(true);
     try {
-      await login(String(form.get("email")), String(form.get("password")));
+      await login(email, password);
+      router.replace("/");
     } catch (err) {
       const badCredentials = err instanceof ApiError && (err.status === 401 || err.status === 422);
       setError(badCredentials ? "Invalid email or password." : "Could not reach the server. Try again.");
